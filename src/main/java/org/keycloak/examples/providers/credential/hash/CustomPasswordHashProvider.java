@@ -1,32 +1,18 @@
 package org.keycloak.examples.providers.credential.hash;
 
+import org.apache.commons.codec.digest.Md5Crypt;
 import org.keycloak.Config;
 import org.keycloak.credential.CredentialModel;
-import org.keycloak.credential.hash.PasswordHashProviderFactory;
 import org.keycloak.credential.hash.PasswordHashProvider;
+import org.keycloak.credential.hash.PasswordHashProviderFactory;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.PasswordPolicy;
 import org.keycloak.models.UserCredentialModel;
 
-import org.apache.commons.codec.digest.DigestUtils;
-
 public class CustomPasswordHashProvider implements PasswordHashProviderFactory, PasswordHashProvider {
 
-    public static final String ID = "custom";
-
-    public CredentialModel encode(String rawPassword, int iterations) {
-        byte[] salt = getSalt();
-        String encodedPassword = encode(rawPassword, iterations, salt);
-
-        CredentialModel credentials = new CredentialModel();
-        credentials.setAlgorithm(ID);
-        credentials.setType(UserCredentialModel.PASSWORD);
-        credentials.setSalt(salt);
-        credentials.setHashIterations(iterations);
-        credentials.setValue(encodedPassword);
-        return credentials;
-    }
+    private static final String ID = "mysvg24";
 
     @Override
     public boolean policyCheck(PasswordPolicy policy, CredentialModel credential) {
@@ -34,21 +20,19 @@ public class CustomPasswordHashProvider implements PasswordHashProviderFactory, 
     }
 
     @Override
-    public void encode(String rawPassword, PasswordPolicy policy, CredentialModel credential) {
-        byte[] salt = getSalt();
-        String encodedPassword = encode(rawPassword, policy.getHashIterations(), salt);
+    public void encode(String rawPassword, int iterations, CredentialModel credential) {
+        String encodedPassword = Md5Crypt.md5Crypt(rawPassword.getBytes());
 
         credential.setAlgorithm(ID);
         credential.setType(UserCredentialModel.PASSWORD);
-        credential.setSalt(salt);
-        credential.setHashIterations(policy.getHashIterations());
+        credential.setSalt(encodedPassword.getBytes());
+        credential.setHashIterations(iterations);
         credential.setValue(encodedPassword);
     }
 
     @Override
     public boolean verify(String rawPassword, CredentialModel credential) {
-        String encodedPassword = encode(rawPassword, credential.getHashIterations(), credential.getSalt());
-
+        String encodedPassword = Md5Crypt.md5Crypt(rawPassword.getBytes(), new String(credential.getSalt()));
         return encodedPassword.equals(credential.getValue());
     }
 
@@ -71,23 +55,5 @@ public class CustomPasswordHashProvider implements PasswordHashProviderFactory, 
     @Override
     public String getId() {
         return ID;
-    }
-
-    private String encode(String rawPassword, int iterations, byte[] salt) {
-        try {
-            String hexPrivateCreditional = DigestUtils.sha1Hex(rawPassword.getBytes("UTF-8"));
-            String stringSalt = new String(salt);
-
-            return BCrypt.hashpw(hexPrivateCreditional, stringSalt);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
-    }
-
-    private byte[] getSalt() {
-        return BCrypt
-                .gensalt(5)
-                .getBytes();
     }
 }
