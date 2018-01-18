@@ -1,4 +1,4 @@
-package org.keycloak.examples.providers.credential.hash;
+package de.svg.keycloak.providers.credential.hash;
 
 import org.junit.Assert;
 import org.junit.Test;

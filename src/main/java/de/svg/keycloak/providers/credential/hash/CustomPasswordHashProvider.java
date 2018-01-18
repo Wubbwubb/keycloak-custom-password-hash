@@ -1,4 +1,4 @@
-package org.keycloak.examples.providers.credential.hash;
+package de.svg.keycloak.providers.credential.hash;
 
 import org.apache.commons.codec.digest.Md5Crypt;
 import org.keycloak.Config;
@@ -32,7 +32,7 @@ public class CustomPasswordHashProvider implements PasswordHashProviderFactory, 
 
     @Override
     public boolean verify(String rawPassword, CredentialModel credential) {
-        String encodedPassword = Md5Crypt.md5Crypt(rawPassword.getBytes(), new String(credential.getSalt()));
+        String encodedPassword = Md5Crypt.md5Crypt(rawPassword.getBytes(), credential.getValue());
         return encodedPassword.equals(credential.getValue());
     }
 
